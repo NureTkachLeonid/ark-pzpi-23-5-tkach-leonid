@@ -4,7 +4,6 @@ from typing import List
 
 import models, schemas, database
 
-# Створення таблиць у БД
 models.Base.metadata.create_all(bind=database.engine)
 
 app = FastAPI(
@@ -13,7 +12,6 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Залежність для отримання сесії БД
 def get_db():
     db = database.SessionLocal()
     try:
@@ -25,20 +23,16 @@ def get_db():
 def read_root():
     return {"message": "Welcome to Smart Plant Care API"}
 
-# --- IoT Endpoint ---
-# Цей ендпоінт прийматиме дані від майбутнього C++ клієнта
 @app.post("/api/sensor/data", response_model=schemas.SensorDataResponse, tags=["IoT"])
 def receive_sensor_data(data: schemas.SensorDataCreate, db: Session = Depends(get_db)):
     """
     Прийом телеметрії від IoT-пристрою (ESP32).
     Зберігає вологість, температуру та освітлення в БД.
     """
-    # Перевіряємо чи існує рослина
     plant = db.query(models.Plant).filter(models.Plant.plant_id == data.plant_id).first()
     if not plant:
         raise HTTPException(status_code=404, detail="Plant not found")
     
-    # Створюємо запис
     db_sensor_data = models.SensorData(
         plant_id=data.plant_id,
         soil_moisture=data.soil_moisture,
@@ -50,7 +44,6 @@ def receive_sensor_data(data: schemas.SensorDataCreate, db: Session = Depends(ge
     db.refresh(db_sensor_data)
     return db_sensor_data
 
-# --- Plants Endpoint (CRUD) ---
 @app.post("/api/plants", response_model=schemas.PlantResponse, tags=["Plants"])
 def create_plant(plant: schemas.PlantCreate, db: Session = Depends(get_db)):
     db_plant = models.Plant(**plant.dict())
