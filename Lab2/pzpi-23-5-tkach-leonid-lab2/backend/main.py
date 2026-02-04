@@ -64,3 +64,39 @@ def read_sensor_stats(plant_id: int, db: Session = Depends(get_db)):
     """
     readings = db.query(models.SensorData).filter(models.SensorData.plant_id == plant_id).all()
     return readings
+
+# --- Settings Endpoint ---
+@app.get("/api/plants/{plant_id}/settings", response_model=schemas.PlantSettingsResponse, tags=["Settings"])
+def read_plant_settings(plant_id: int, db: Session = Depends(get_db)):
+    """
+    Отримати поточні налаштування (межі поливу, температури) для рослини.
+    Якщо налаштувань немає — створюються дефолтні.
+    """
+    settings = db.query(models.PlantSettings).filter(models.PlantSettings.plant_id == plant_id).first()
+    if not settings:
+        # Auto-create defaults if missing
+        settings = models.PlantSettings(plant_id=plant_id)
+        db.add(settings)
+        db.commit()
+        db.refresh(settings)
+    return settings
+
+@app.put("/api/plants/{plant_id}/settings", response_model=schemas.PlantSettingsResponse, tags=["Settings"])
+def update_plant_settings(plant_id: int, settings: schemas.PlantSettingsUpdate, db: Session = Depends(get_db)):
+    """
+    Оновити налаштування (наприклад, встановити нову мін. вологість).
+    """
+    db_settings = db.query(models.PlantSettings).filter(models.PlantSettings.plant_id == plant_id).first()
+    if not db_settings:
+        db_settings = models.PlantSettings(plant_id=plant_id)
+        db.add(db_settings)
+    
+    # Update fields
+    for var, value in settings.dict(exclude_unset=True).items():
+        setattr(db_settings, var, value)
+    
+    db_settings.updated_at = datetime.utcnow()
+    db.add(db_settings)
+    db.commit()
+    db.refresh(db_settings)
+    return db_settings

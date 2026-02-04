@@ -30,3 +30,22 @@ class PlantResponse(PlantBase):
     
     class Config:
         from_attributes = True
+
+# --- Settings Schemas ---
+class PlantSettingsBase(BaseModel):
+    min_moisture: int = 30
+    max_moisture: int = 80
+    min_temperature: float = 15.0
+    max_temperature: float = 30.0
+    min_light_level: int = 200
+
+class PlantSettingsUpdate(PlantSettingsBase):
+    pass
+
+class PlantSettingsResponse(PlantSettingsBase):
+    setting_id: int
+    plant_id: int
+    updated_at: datetime
+    
+    class Config:
+        from_attributes = True
