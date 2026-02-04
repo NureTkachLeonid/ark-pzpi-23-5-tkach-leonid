@@ -1,0 +1,4 @@
+video_scenario.txt
+__pycache__/
+*.db
+.DS_Store
