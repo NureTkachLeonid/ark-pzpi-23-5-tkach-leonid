@@ -12,7 +12,7 @@
 
 3. Демонстрація API та Swagger (01:30 - 03:00)
    - ЗАПУСТІТЬ СЕРВЕР: Відкрийте термінал у папці `Lab2/pzpi-23-5-tkach-leonid-lab2/backend` і виконайте:
-     `uvicorn main:app --reload`
+     `python3 -m uvicorn main:app --reload`
    - Відкрийте браузер: `http://127.0.0.1:8000/docs`.
    - Скажіть: "Сервер реалізовано на FastAPI. Ось автоматична документація Swagger UI."
    - КРОК 1: Створіть рослину через `POST /api/plants`. Туди введіть JSON:
