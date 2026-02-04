@@ -6,7 +6,7 @@ from database import Base
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True)
     password_hash = Column(String)
     full_name = Column(String)
@@ -17,8 +17,8 @@ class User(Base):
 class Plant(Base):
     __tablename__ = "plants"
 
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
+    plant_id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.user_id"))
     name = Column(String)
     species = Column(String)
     photo_url = Column(String)
@@ -31,8 +31,8 @@ class Plant(Base):
 class PlantSettings(Base):
     __tablename__ = "plant_settings"
 
-    id = Column(Integer, primary_key=True, index=True)
-    plant_id = Column(Integer, ForeignKey("plants.id"), unique=True)
+    setting_id = Column(Integer, primary_key=True, index=True)
+    plant_id = Column(Integer, ForeignKey("plants.plant_id"), unique=True)
     min_moisture = Column(Integer, default=30)
     max_moisture = Column(Integer, default=80)
     min_temperature = Column(Float, default=15.0)
@@ -45,8 +45,8 @@ class PlantSettings(Base):
 class SensorData(Base):
     __tablename__ = "sensor_data"
 
-    id = Column(Integer, primary_key=True, index=True)
-    plant_id = Column(Integer, ForeignKey("plants.id"))
+    sensor_data_id = Column(Integer, primary_key=True, index=True)
+    plant_id = Column(Integer, ForeignKey("plants.plant_id"))
     soil_moisture = Column(Integer)
     temperature = Column(Float)
     light_level = Column(Integer)

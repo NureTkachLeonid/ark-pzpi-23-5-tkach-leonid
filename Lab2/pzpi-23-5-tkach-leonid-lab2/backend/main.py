@@ -34,7 +34,7 @@ def receive_sensor_data(data: schemas.SensorDataCreate, db: Session = Depends(ge
     Зберігає вологість, температуру та освітлення в БД.
     """
     # Перевіряємо чи існує рослина
-    plant = db.query(models.Plant).filter(models.Plant.id == data.plant_id).first()
+    plant = db.query(models.Plant).filter(models.Plant.plant_id == data.plant_id).first()
     if not plant:
         raise HTTPException(status_code=404, detail="Plant not found")
     
@@ -63,3 +63,11 @@ def create_plant(plant: schemas.PlantCreate, db: Session = Depends(get_db)):
 def read_plants(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     plants = db.query(models.Plant).offset(skip).limit(limit).all()
     return plants
+
+@app.get("/api/plants/{plant_id}/stats", response_model=List[schemas.SensorDataResponse], tags=["IoT"])
+def read_sensor_stats(plant_id: int, db: Session = Depends(get_db)):
+    """
+    Отримати історію показників для конкретної рослини.
+    """
+    readings = db.query(models.SensorData).filter(models.SensorData.plant_id == plant_id).all()
+    return readings

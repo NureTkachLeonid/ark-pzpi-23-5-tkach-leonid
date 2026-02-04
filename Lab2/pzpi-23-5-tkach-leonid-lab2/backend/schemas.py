@@ -14,7 +14,7 @@ class SensorDataCreate(BaseModel):
         from_attributes = True
 
 class SensorDataResponse(SensorDataCreate):
-    id: int
+    sensor_data_id: int
     timestamp: datetime
 
 # --- Plant Schemas ---
@@ -27,7 +27,7 @@ class PlantCreate(PlantBase):
     user_id: int # Тимчасово передаємо явно
 
 class PlantResponse(PlantBase):
-    id: int
+    plant_id: int
     created_at: datetime
     
     class Config:
