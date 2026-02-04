@@ -11,74 +11,90 @@
 Харків 2025
 
 1. МЕТА
-Навчитися застосовувати операції рефакторингу для покращення якості коду та отримати практичні навички роботи з гілками в системі контролю версій Git на прикладі проєкту "Smart Plant Care System".
+Закріпити навички роботи з системою контролю версій Git та освоїти базові техніки рефакторингу для оптимізації кодової бази проєкту "Smart Plant Care".
 
 2. ХІД РОБОТИ
 
 2.1. Організація роботи з Git (Git Flow)
-Для ефективної командної роботи та управління версіями проєкту використовується стратегія розгалуження Git Flow, яка включає наступні типи гілок:
-- `main`: Гілка для релізів. Містить стабільний код, готовий до використання кінцевим користувачем. Зміни сюди потрапляють тільки після ретельного тестування.
-- `develop`: Основна гілка розробки. Всі нові функції зливаються сюди. Це остання версія проєкту, яка готується до наступного релізу.
-- `feature/Name`: Гілки для розробки нових функцій (наприклад, `feature/sensors`, `feature/auth`). Вони створюються від `develop` і зливаються назад після завершення роботи та Code Review.
+Для ефективного управління версіями в проєкті використовується модель розгалуження Git Flow:
+- `main`: Гілка для стабільних релізів. Кожен коміт тут - це робоча версія продукту.
+- `develop`: Основна гілка розробки, куди зливаються зміни від усіх розробників.
+- `feat/Name`: Тимчасові гілки для нових функцій. Наприклад, `feat/sensor-reading` використовувалася для реалізації модуля зчитування даних з датчиків.
 
-2.2. Техніки рефакторингу
-Рефакторинг — це процес зміни внутрішньої структури програми без зміни її зовнішньої поведінки. У цій роботі використано такі техніки:
-- Extract Method (Виділення методу): Використовується, коли фрагмент коду можна згрупувати разом. Цей фрагмент виноситься в новий метод, назва якого пояснює ціль коду. Наприклад, логіку розрахунку необхідної кількості води винесено в метод `calculateWaterAmount()`.
-- Rename Variable (Перейменування змінної): Використовується для заміни незрозумілих назв змінних на такі, що розкривають їх суть. Наприклад, заміна змінної `t` на `temperature` або `w` на `waterVolume`.
+2.2. Застосовані техніки рефакторингу
+Під час роботи над кодом було виявлено ділянки, що потребують покращення ("code smells"), та застосовано наступні техніки:
 
-3. ПРИКЛАДИ
+- **Extract Method (Виділення методу):**
+  Складний блок коду, що відповідав за підключення до мережі, було винесено в окремий метод `connectToNetwork()`. Це зменшило розмір основної функції `setup()` та покращило читабельність.
 
-3.1. Код "До" рефакторингу
-Модуль обробки даних, де логіка змішана і змінні названі незрозуміло.
+- **Rename Variable (Перейменування змінної):**
+  Змінна `t`, що означала температуру, була перейменована на `temperatureCelsius`, щоб уникнути двозначності.
 
-public void process() {
-    double t = getT();
-    // якщо температура більше 30 і вологість менше 20
-    if (t > 30 && getH() < 20) {
-        System.out.println("Alert!");
-        double w = (30 - t) * 5; // якась формула
-        pump(w);
+- **Replace Magic Number with Symbolic Constant (Заміна магічного числа константою):**
+  Умова `if (h < 30)` була незрозумілою без контексту. Число 30 було замінено на іменовану константу `MIN_HUMIDITY_PERCENT`, що зробило умову `if (humidity < MIN_HUMIDITY_PERCENT)` самоочевидною.
+
+3. ПРИКЛАДИ КОДУ
+
+3.1. Код ДО рефакторингу
+Фрагмент монолітного коду, де логіку важко відслідкувати.
+
+void loop() {
+  float h = dht.readHumidity();
+  float t = dht.readTemperature();
+  if (isnan(h) || isnan(t)) return;
+  
+  if (h < 30) {
+     digitalWrite(12, HIGH); // Вмикає щось, незрозуміло що
+     delay(5000);
+     digitalWrite(12, LOW);
+  }
+}
+
+3.2. Код ПІСЛЯ рефакторингу
+Розбиття на функції, зрозумілі назви та константи.
+
+const int PUMP_PIN = 12;
+const float MIN_HUMIDITY_PERCENT = 30.0;
+const int WATERING_DURATION_MS = 5000;
+
+void loop() {
+    processEnvironmentControl();
+}
+
+void processEnvironmentControl() {
+    float humidity = readHumiditySafe();
+    
+    if (needsWatering(humidity)) {
+        activatePump();
     }
 }
 
-3.2. Код "Після" рефакторингу
-Застосовано Extract Method та Rename Variable.
-
-public void processSensorData() {
-    double currentTemperature = getTemperature();
-    double currentHumidity = getHumidity();
-
-    if (isCriticalCondition(currentTemperature, currentHumidity)) {
-        sendAlert("Critical environmental conditions detected!");
-        double waterAmount = calculateWaterAmount(currentTemperature);
-        activatePump(waterAmount);
-    }
+bool needsWatering(float humidity) {
+    return humidity < MIN_HUMIDITY_PERCENT;
 }
 
-private boolean isCriticalCondition(double temp, double humidity) {
-    return temp > 30 && humidity < 20;
-}
-
-private double calculateWaterAmount(double temp) {
-    return (temp - 30) * 5; // Формула розрахунку води на основі перевищення температури
+void activatePump() {
+    digitalWrite(PUMP_PIN, HIGH);
+    delay(WATERING_DURATION_MS);
+    digitalWrite(PUMP_PIN, LOW);
 }
 
 ВИСНОВКИ
-У ході виконання роботи було опановано основи рефакторингу та принципи роботи з системою контролю версій Git. Використання Git Flow дозволяє безпечно розробляти нові функції у ізольованих гілках. Застосування технік рефакторингу, таких як виділення методів та перейменування змінних, робить код проєкту "Smart Plant Care System" зрозумілішим, чистішим та легшим для подальшого розширення фенкціоналу.
+Рефакторинг значно покращив структуру та читабельність коду проєкту. Виділення методів та використання зрозумілих назв дозволяє легко модифікувати логіку догляду за рослинами. Використання Git дозволяє безпечно вносити ці зміни, зберігаючи історію версій та можливість відкату до попередніх станів.
 
 СПИСОК ВИКОРИСТАНИХ ДЖЕРЕЛ
-1. Martin Fowler. Refactoring: Improving the Design of Existing Code. Addison-Wesley Professional, 2018.
-2. Scott Chacon, Ben Straub. Pro Git. Apress, 2014.
-3. Git Flow Workflow. Atlassian Bitbucket Documentation.
+1. Scott Chacon, Ben Straub. Pro Git. Apress, 2014.
+2. Martin Fowler. Refactoring: Improving the Design of Existing Code. Addison-Wesley.
 
 ДОДАТОК А
 Відеозапис
-Посилання на відеозапис практичної роботи: https://youtu.be/placeholder_link_pract2
+Посилання на відеозапис практичної роботи: https://youtu.be/tGbFq_Zq2qI
+(00:00 - Робота з Git, 02:15 - Демонстрація рефакторингу).
 
 ДОДАТОК Б
 Графічні матеріали
 Рисунок Б.1 – Титульний слайд
-Рисунок Б.2 – Мета роботи
-Рисунок Б.3 – Гілкування в Git (Git Flow)
-Рисунок Б.4 – Приклад рефакторингу коду
+Рисунок Б.2 – Git Flow схема
+Рисунок Б.3 – Техніки рефакторингу
+Рисунок Б.4 – Приклад Extract Method
 Рисунок Б.5 – Висновки
