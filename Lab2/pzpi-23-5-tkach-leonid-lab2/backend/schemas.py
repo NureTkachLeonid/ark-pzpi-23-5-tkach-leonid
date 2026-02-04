@@ -31,7 +31,6 @@ class PlantResponse(PlantBase):
     class Config:
         from_attributes = True
 
-# --- Settings Schemas ---
 class PlantSettingsBase(BaseModel):
     min_moisture: int = 30
     max_moisture: int = 80
