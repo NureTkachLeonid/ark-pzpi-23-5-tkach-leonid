@@ -2,7 +2,7 @@ from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 
-from . import models, schemas, database
+import models, schemas, database
 
 # Створення таблиць у БД
 models.Base.metadata.create_all(bind=database.engine)
