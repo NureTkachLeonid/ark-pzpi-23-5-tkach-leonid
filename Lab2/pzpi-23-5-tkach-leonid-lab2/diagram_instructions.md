@@ -86,8 +86,10 @@ classDiagram
         +int plant_id
         +int min_moisture
         +int max_moisture
-        +float min_temp
-        +float max_temp
+        +float min_temperature
+        +float max_temperature
+        +int min_light_level
+        +datetime updated_at
     }
 
     class SensorData {
