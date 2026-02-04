@@ -68,15 +68,14 @@ ________________
 
 Відеозапис
 
-Відеозапис презентації результатів лабораторної роботи: https://youtu.be/placeholder_link_lab1
+Відеозапис презентації результатів лабораторної роботи: https://www.youtube.com/watch?v=lk-F6L_jcgw
 Хронологічний опис відеозапису:
-00:00 — Вступ та тема проєкту
-00:45 — Background (Передумови проблеми)
-01:30 — Business Opportunity (Можливості IoT)
-02:15 — Vision Statement (Бачення рішення)
-03:00 — Major Features (Функціонал)
-03:45 — Scope (Межі першого релізу)
-04:30 — Висновки
+00:00 — Вступ (Introduction)
+00:50 — 1. Бізнес-вимоги (Business Requirements)
+01:53 — 2. Бачення рішення (Solution Vision)
+02:41 — 3. Обсяг і обмеження (Scope and Limitations)
+03:31 — 4. Робоче середовище (Operating Environment)
+03:50 — Висновки (Conclusion)
 
 ________________
 
