@@ -16,7 +16,7 @@ def get_db():
     finally:
         db.close()
 
-# --- Admin Function 1: Backup ---
+
 @router.post("/backup")
 def backup_database():
     """
@@ -24,7 +24,7 @@ def backup_database():
     """
     return services.create_database_backup()
 
-# --- Admin Function 2: Export Data ---
+
 @router.get("/export/sensor-data")
 def export_data(db: Session = Depends(get_db)):
     """
@@ -33,7 +33,7 @@ def export_data(db: Session = Depends(get_db)):
     csv_data = services.export_sensor_data_csv(db)
     return Response(content=csv_data, media_type="text/csv", headers={"Content-Disposition": "attachment; filename=sensor_data.csv"})
 
-# --- Admin Function 3: Import Data ---
+
 @router.post("/import/sensor-data")
 async def import_data(file: UploadFile = File(...), db: Session = Depends(get_db)):
     """
@@ -44,7 +44,7 @@ async def import_data(file: UploadFile = File(...), db: Session = Depends(get_db
     result = services.import_sensor_data_csv(db, decoded_content)
     return result
 
-# --- Admin Function 4: User Management ---
+
 @router.patch("/users/{user_id}/block")
 def block_user(user_id: int, is_active: bool, db: Session = Depends(get_db)):
     """

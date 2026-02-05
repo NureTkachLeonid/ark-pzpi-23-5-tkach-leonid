@@ -100,8 +100,7 @@ def update_plant_settings(plant_id: int, settings: schemas.PlantSettingsUpdate, 
     db.refresh(db_settings)
     return db_settings
 
-# --- Business Logic Endpoint ---
-# --- Business Logic & Analytics Endpoints ---
+
 
 @app.get("/api/plants/{plant_id}/analytics/forecast", tags=["Analytics"])
 def get_moisture_forecast(plant_id: int, db: Session = Depends(get_db)):

@@ -6,9 +6,9 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 import models
 
-# --- BUSINESS LOGIC LAYER ---
 
-# --- ANALYTICS SERVICES (EWMA & Stats) ---
+
+
 
 def calculate_ewma(data: list[float], alpha: float) -> float:
     smoothed = data[0]
@@ -17,25 +17,25 @@ def calculate_ewma(data: list[float], alpha: float) -> float:
     return smoothed
 
 def get_optimal_alpha(data: list[float]) -> float:
-    # Чим стабільніші дані, тим менша альфа
+
     if not data:
         return 0.5
     avg = sum(data) / len(data)
     variance = sum((x - avg)**2 for x in data) / len(data)
     if variance > 50:
-        return 0.4 # Швидка реакція
-    return 0.2 # Плавне згладжування
+        return 0.4
+    return 0.2
 
 def weather_correction(base_forecast: float, temp: float) -> float:
-    # Якщо спекотно (>25), волога випаровується швидше
+
     factor = 1.0
     if temp > 25.0:
         factor = 1.0 + 0.05 * (temp - 25.0)
     
-    return base_forecast / factor # Пришвидшене падіння вологості
+    return base_forecast / factor
 
 def forecast_moisture(db: Session, plant_id: int):
-    # Fetch recent moisture data
+
     readings = db.query(models.SensorData).filter(
         models.SensorData.plant_id == plant_id
     ).order_by(models.SensorData.timestamp.asc()).all()
@@ -49,11 +49,11 @@ def forecast_moisture(db: Session, plant_id: int):
     alpha = get_optimal_alpha(values)
     ewma_val = calculate_ewma(values, alpha)
     
-    # Apply weather correction based on last temp
+
     current_temp = temps[-1] if temps else 25.0
     corrected_forecast = weather_correction(ewma_val, current_temp)
     
-    # Simple linear trend
+
     current = values[-1]
     trend = corrected_forecast - current
     
@@ -61,7 +61,7 @@ def forecast_moisture(db: Session, plant_id: int):
         "current_moisture": current,
         "forecast_ewma_corrected": round(corrected_forecast, 2),
         "trend": round(trend, 2),
-        "alert": corrected_forecast < 30  # Example threshold
+        "alert": corrected_forecast < 30
     }
 
 def get_average_stats_per_plant(db: Session, plant_id: int):
@@ -78,7 +78,7 @@ def get_average_stats_per_plant(db: Session, plant_id: int):
     }
 
 def get_hourly_sensor_data(db: Session, plant_id: int):
-    # Групування по годинах (SQLite syntax)
+
     results = db.query(
         func.strftime('%H', models.SensorData.timestamp).label('hour'),
         func.avg(models.SensorData.temperature)
@@ -87,11 +87,11 @@ def get_hourly_sensor_data(db: Session, plant_id: int):
     
     return [{"hour": int(r.hour), "avg_temp": round(r[1], 1)} for r in results]
 
-# Legacy placeholder to keep compatibility if needed, or we can use the new stats
+
 def calculate_plant_health_index(db: Session, plant_id: int, period_days: int = 7) -> dict:
     return get_average_stats_per_plant(db, plant_id)
 
-# --- ADMIN SERVICES ---
+
 
 def create_database_backup():
     """
@@ -101,7 +101,7 @@ def create_database_backup():
     timestamp = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
     destination = f"backups/backup_{timestamp}.db"
     
-    # Ensure backups directory exists
+
     import os
     if not os.path.exists("backups"):
         os.makedirs("backups")
@@ -120,10 +120,10 @@ def export_sensor_data_csv(db: Session) -> str:
     output = io.StringIO()
     writer = csv.writer(output)
     
-    # Header
+
     writer.writerow(["sensor_data_id", "plant_id", "soil_moisture", "temperature", "light_level", "timestamp"])
     
-    # Rows
+
     for row in data:
         writer.writerow([
             row.sensor_data_id, 
@@ -145,19 +145,18 @@ def import_sensor_data_csv(db: Session, csv_content: str):
     
     count = 0
     for row in reader:
-        # Basic validation can be added here
+
         try:
             sensor_data = models.SensorData(
                 plant_id=int(row["plant_id"]),
                 soil_moisture=int(row["soil_moisture"]),
                 temperature=float(row["temperature"]),
                 light_level=int(row["light_level"]),
-                # Timestamp parsing might be needed if provided, else default
             )
             db.add(sensor_data)
             count += 1
         except Exception:
-            continue # Skip bad rows
+            continue
             
     db.commit()
     return {"status": "success", "imported_rows": count}
