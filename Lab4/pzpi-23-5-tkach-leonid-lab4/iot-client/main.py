@@ -4,14 +4,12 @@ import time
 from config import Config
 
 def generate_sensor_data(plant_id: int):
-    """
-    Generates realistic random sensor data for the plant.
-    """
+
     return {
         "plant_id": plant_id,
-        "soil_moisture": random.randint(30, 80),  # Realistic moisture %
-        "temperature": round(random.uniform(15.0, 30.0), 1), # Realistic temp Celsius
-        "light_level": random.randint(100, 1000) # Realistic light lux
+        "soil_moisture": random.randint(30, 80),
+        "temperature": round(random.uniform(15.0, 30.0), 1),
+        "light_level": random.randint(100, 1000)
     }
 
 def main():
@@ -23,7 +21,7 @@ def main():
         try:
             data = generate_sensor_data(Config.DEVICE_ID)
             
-            # Using the endpoint from Lab 3 backend: /api/sensor/data
+
             url = f"{Config.SERVER_URL}/api/sensor/data"
             
             response = requests.post(url, json=data)
