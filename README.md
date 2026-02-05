@@ -4,7 +4,7 @@ ark-pzpi-23-5-tkach-leonid
 
 Ткач Леонід
 
-Правила оформлення програмного коду мовою C++
+Правила оформлення програмного коду мовою Python
 
 Методи рефакторингу коду: Rename Variable, Extract Method, Replace Magic Number with Constant
 

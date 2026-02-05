@@ -1,0 +1,16 @@
+@startuml
+left to right direction
+actor "IoT Device (Smart Pot)" as iot
+
+rectangle "IoT System" {
+  usecase "Зчитування показників сенсорів" as UC1
+  usecase "Формування пакету даних" as UC2
+  usecase "Відправка даних на сервер" as UC3
+  usecase "Обробка помилок з'єднання" as UC4
+}
+
+iot --> UC1
+iot --> UC2
+iot --> UC3
+iot --> UC4
+@enduml
