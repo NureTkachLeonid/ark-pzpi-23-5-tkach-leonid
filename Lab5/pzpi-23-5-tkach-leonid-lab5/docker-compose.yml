@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    container_name: smart_plant_db
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ../../Lab3/pzpi-23-5-tkach-leonid-lab3/backend
+    container_name: smart_plant_backend
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
+    ports:
+      - "${SERVER_PORT}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  iot-client:
+    build: ../../Lab4/pzpi-23-5-tkach-leonid-lab4/iot-client
+    container_name: smart_plant_iot
+    env_file:
+      - .env
+    environment:
+      SERVER_URL: http://backend:8000
+      DEVICE_ID: 1
+      SEND_INTERVAL: 10
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
