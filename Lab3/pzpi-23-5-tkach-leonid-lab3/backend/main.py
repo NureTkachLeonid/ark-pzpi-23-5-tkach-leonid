@@ -101,10 +101,25 @@ def update_plant_settings(plant_id: int, settings: schemas.PlantSettingsUpdate, 
     return db_settings
 
 # --- Business Logic Endpoint ---
-@app.get("/api/plants/{plant_id}/analytics", tags=["Analytics"])
-def get_plant_analytics(plant_id: int, days: int = 7, db: Session = Depends(get_db)):
+# --- Business Logic & Analytics Endpoints ---
+
+@app.get("/api/plants/{plant_id}/analytics/forecast", tags=["Analytics"])
+def get_moisture_forecast(plant_id: int, db: Session = Depends(get_db)):
     """
-    Аналітика здоров'я рослини (Business Logic).
-    Розраховує 'Health Index' на основі даних за останні N днів.
+    Прогноз вологості (EWMA) з кліматичною корекцією.
     """
-    return services.calculate_plant_health_index(db, plant_id, days)
+    return services.forecast_moisture(db, plant_id)
+
+@app.get("/api/plants/{plant_id}/analytics/stats", tags=["Analytics"])
+def get_plant_stats(plant_id: int, db: Session = Depends(get_db)):
+    """
+    Середні показники за весь час.
+    """
+    return services.get_average_stats_per_plant(db, plant_id)
+
+@app.get("/api/plants/{plant_id}/analytics/hourly", tags=["Analytics"])
+def get_hourly_stats(plant_id: int, db: Session = Depends(get_db)):
+    """
+    Погодинна статистика температури (циркадні ритми).
+    """
+    return services.get_hourly_sensor_data(db, plant_id)

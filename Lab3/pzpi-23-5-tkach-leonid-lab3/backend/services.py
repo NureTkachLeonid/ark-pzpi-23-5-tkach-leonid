@@ -8,61 +8,88 @@ import models
 
 # --- BUSINESS LOGIC LAYER ---
 
-def calculate_plant_health_index(db: Session, plant_id: int, period_days: int = 7) -> dict:
-    """
-    Business Logic: Calculates a 'Health Index' (0-100%) for a plant.
-    Algorithm:
-    1. Retrieve sensor data for the last N days.
-    2. Retrieve plant settings (min/max thresholds).
-    3. For each data point, check if it falls within the ideal range.
-    4. Health Score = (Good Readings / Total Readings) * 100.
-    """
-    settings = db.query(models.PlantSettings).filter(models.PlantSettings.plant_id == plant_id).first()
-    if not settings:
-        return {"error": "Plant settings not found"}
+# --- ANALYTICS SERVICES (EWMA & Stats) ---
 
-    start_date = datetime.utcnow() - timedelta(days=period_days)
+def calculate_ewma(data: list[float], alpha: float) -> float:
+    smoothed = data[0]
+    for i in range(1, len(data)):
+        smoothed = alpha * data[i] + (1 - alpha) * smoothed
+    return smoothed
+
+def get_optimal_alpha(data: list[float]) -> float:
+    # Чим стабільніші дані, тим менша альфа
+    if not data:
+        return 0.5
+    avg = sum(data) / len(data)
+    variance = sum((x - avg)**2 for x in data) / len(data)
+    if variance > 50:
+        return 0.4 # Швидка реакція
+    return 0.2 # Плавне згладжування
+
+def weather_correction(base_forecast: float, temp: float) -> float:
+    # Якщо спекотно (>25), волога випаровується швидше
+    factor = 1.0
+    if temp > 25.0:
+        factor = 1.0 + 0.05 * (temp - 25.0)
+    
+    return base_forecast / factor # Пришвидшене падіння вологості
+
+def forecast_moisture(db: Session, plant_id: int):
+    # Fetch recent moisture data
     readings = db.query(models.SensorData).filter(
-        models.SensorData.plant_id == plant_id,
-        models.SensorData.timestamp >= start_date
-    ).all()
+        models.SensorData.plant_id == plant_id
+    ).order_by(models.SensorData.timestamp.asc()).all()
+    
+    values = [float(d.soil_moisture) for d in readings]
+    temps = [float(d.temperature) for d in readings]
+    
+    if len(values) < 2:
+        return {"error": "Not enough data for forecast"}
 
-    if not readings:
-        return {"health_index": 0, "status": "No Data", "period_days": period_days}
-
-    total_points = len(readings)
-    good_points = 0
-
-    for r in readings:
-        # Check moisture
-        is_moisture_good = settings.min_moisture <= r.soil_moisture <= settings.max_moisture
-        # Check temperature
-        is_temp_good = settings.min_temperature <= r.temperature <= settings.max_temperature
-        
-        # Weighted score: Moisture is critical (60%), Temp is secondary (40%)
-        # Here we simplistically count "perfect" readings where both are good
-        if is_moisture_good and is_temp_good:
-            good_points += 1
-        elif is_moisture_good or is_temp_good:
-             good_points += 0.5 # Partial credit
-
-    score = round((good_points / total_points) * 100, 2)
-
-    status = "Critical"
-    if score >= 90:
-        status = "Perfect"
-    elif score >= 75:
-        status = "Good"
-    elif score >= 50:
-        status = "Needs Attention"
-
+    alpha = get_optimal_alpha(values)
+    ewma_val = calculate_ewma(values, alpha)
+    
+    # Apply weather correction based on last temp
+    current_temp = temps[-1] if temps else 25.0
+    corrected_forecast = weather_correction(ewma_val, current_temp)
+    
+    # Simple linear trend
+    current = values[-1]
+    trend = corrected_forecast - current
+    
     return {
-        "plant_id": plant_id,
-        "health_index": score,
-        "status": status,
-        "period_days": period_days,
-        "total_readings": total_points
+        "current_moisture": current,
+        "forecast_ewma_corrected": round(corrected_forecast, 2),
+        "trend": round(trend, 2),
+        "alert": corrected_forecast < 30  # Example threshold
     }
+
+def get_average_stats_per_plant(db: Session, plant_id: int):
+    stats = db.query(
+        func.avg(models.SensorData.soil_moisture),
+        func.avg(models.SensorData.temperature),
+        func.avg(models.SensorData.light_level)
+    ).filter(models.SensorData.plant_id == plant_id).first()
+    
+    return {
+        "avg_moisture": round(stats[0] or 0, 1),
+        "avg_temp": round(stats[1] or 0, 1),
+        "avg_light": round(stats[2] or 0, 1)
+    }
+
+def get_hourly_sensor_data(db: Session, plant_id: int):
+    # Групування по годинах (SQLite syntax)
+    results = db.query(
+        func.strftime('%H', models.SensorData.timestamp).label('hour'),
+        func.avg(models.SensorData.temperature)
+    ).filter(models.SensorData.plant_id == plant_id)\
+     .group_by('hour').all()
+    
+    return [{"hour": int(r.hour), "avg_temp": round(r[1], 1)} for r in results]
+
+# Legacy placeholder to keep compatibility if needed, or we can use the new stats
+def calculate_plant_health_index(db: Session, plant_id: int, period_days: int = 7) -> dict:
+    return get_average_stats_per_plant(db, plant_id)
 
 # --- ADMIN SERVICES ---
 
