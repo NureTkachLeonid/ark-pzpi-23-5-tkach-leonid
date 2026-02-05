@@ -1,4 +1,12 @@
 #!/bin/bash
+set -e
+
+# Docker check
+if ! command -v docker &> /dev/null; then
+    echo "Error: Docker is not installed."
+    echo "Install it first: https://docs.docker.com/get-started"
+    exit 1
+fi
 
 
 DEFAULT_DB_USER="postgres"
