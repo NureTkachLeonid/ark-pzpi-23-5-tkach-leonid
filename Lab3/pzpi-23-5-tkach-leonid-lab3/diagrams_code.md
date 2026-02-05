@@ -6,68 +6,88 @@ Copy and paste the code blocks below into a Mermaid Live Editor (e.g., https://m
 This diagram shows the algorithm used in `services.calculate_plant_health_index`.
 
 ```mermaid
-activityDiagram
-    start
-    :User/Client requests Analytics;
-    :Server calls calculate_plant_health_index(plant_id, days);
+flowchart TD
+    start([start])
+    A["User/Client requests Analytics"]
+    B["Server calls calculate_plant_health_index(plant_id, days)"]
+    C["Fetch PlantSettings (min/max thresholds)"]
+    D{"Settings found?"}
+    E["Return Error Settings missing"]
+    F([stop])
+    G["Calculate start_date (Now - days)"]
+    H["Fetch SensorData from DB (timestamp >= start_date)"]
+    I{"Readings exist?"}
+    J["Return Health Index = 0"]
+    K["Initialize total_points = count(Readings)"]
+    L["Initialize good_points = 0"]
+    M{"Has more readings?"}
+    N["Get next reading (moisture, temp)"]
+    O{"Moisture in valid range?"}
+    P["is_moisture_good = True"]
+    Q["is_moisture_good = False"]
+    R{"Temp in valid range?"}
+    S["is_temp_good = True"]
+    T["is_temp_good = False"]
+    U{"is_moisture_good AND is_temp_good"}
+    V["good_points += 1"]
+    W{"is_moisture_good OR is_temp_good"}
+    X["good_points += 0.5"]
+    Y["good_points unchanged"]
+    Z["Calculate Score = (good_points / total_points) * 100"]
+    AA{"Score >= 90"}
+    AB["Status = Perfect"]
+    AC{"Score >= 75"}
+    AD["Status = Good"]
+    AE{"Score >= 50"}
+    AF["Status = Needs Attention"]
+    AG["Status = Critical"]
+    AH["Return Result JSON"]
+    AI([stop])
     
-    partition "Business Logic Layer" {
-        :Fetch PlantSettings (min/max thresholds);
-        if (Settings found?) then (No)
-            :Return Error "Settings missing";
-            stop
-        endif
-        
-        :Calculate start_date (Now - days);
-        :Fetch SensorData from DB (timestamp >= start_date);
-        
-        if (Readings exist?) then (No)
-            :Return Heath Index = 0;
-            stop
-        endif
-        
-        :Initialize total_points = count(Readings);
-        :Initialize good_points = 0;
-        
-        while (Has more readings?)
-            :Get next reading (moisture, temp);
-            
-            if (Moisture in valid range?) then (Yes)
-                :is_moisture_good = True;
-            else (No)
-                :is_moisture_good = False;
-            endif
-            
-            if (Temp in valid range?) then (Yes)
-                :is_temp_good = True;
-            else (No)
-                :is_temp_good = False;
-            endif
-            
-            if (is_moisture_good AND is_temp_good) then (Yes)
-                :good_points += 1;
-            elseif (is_moisture_good OR is_temp_good) then (Yes)
-                :good_points += 0.5;
-            else (No)
-                :good_points unchanged;
-            endif
-        endwhile
-        
-        :Calculate Score = (good_points / total_points) * 100;
-        
-        if (Score >= 90) then (Yes)
-            :Status = "Perfect";
-        elseif (Score >= 75) then (Yes)
-            :Status = "Good";
-        elseif (Score >= 50) then (Yes)
-            :Status = "Needs Attention";
-        else (No)
-            :Status = "Critical";
-        endif
-    }
-    
-    :Return Result JSON;
-    stop
+    start --> A
+    A --> B
+    B --> C
+    C --> D
+    D -->|No| E
+    E --> F
+    D -->|Yes| G
+    G --> H
+    H --> I
+    I -->|No| J
+    J --> F
+    I -->|Yes| K
+    K --> L
+    L --> M
+    M -->|Yes| N
+    N --> O
+    O -->|Yes| P
+    O -->|No| Q
+    P --> R
+    Q --> R
+    R -->|Yes| S
+    R -->|No| T
+    S --> U
+    T --> U
+    U -->|Yes| V
+    U -->|No| W
+    V --> M
+    W -->|Yes| X
+    W -->|No| Y
+    X --> M
+    Y --> M
+    M -->|No| Z
+    Z --> AA
+    AA -->|Yes| AB
+    AA -->|No| AC
+    AB --> AH
+    AC -->|Yes| AD
+    AC -->|No| AE
+    AD --> AH
+    AE -->|Yes| AF
+    AE -->|No| AG
+    AF --> AH
+    AG --> AH
+    AH --> AI
 ```
 
 ## 2. Sequence Diagram (Admin Function: Backup)
