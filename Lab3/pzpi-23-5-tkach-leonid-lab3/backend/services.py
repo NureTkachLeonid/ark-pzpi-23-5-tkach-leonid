@@ -89,15 +89,15 @@ def get_hourly_sensor_data(db: Session, plant_id: int):
 
 
 def calculate_plant_health_index(db: Session, plant_id: int, period_days: int = 7) -> dict:
-    # 1. Отримуємо налаштування (межі норми)
+
     settings = db.query(models.PlantSettings).filter(models.PlantSettings.plant_id == plant_id).first()
     if not settings:
         return {"error": "Settings not found", "health_index": 0, "status": "Unknown"}
 
-    # 2. Визначаємо період
+
     start_date = datetime.now() - timedelta(days=period_days)
     
-    # 3. Завантажуємо дані
+
     readings = db.query(models.SensorData).filter(
         models.SensorData.plant_id == plant_id,
         models.SensorData.timestamp >= start_date
@@ -109,7 +109,7 @@ def calculate_plant_health_index(db: Session, plant_id: int, period_days: int = 
     total_points = len(readings)
     good_points = 0.0
 
-    # 4. Аналізуємо кожен запис
+
     for r in readings:
         is_moisture_good = settings.min_moisture <= r.soil_moisture <= settings.max_moisture
         is_temp_good = settings.min_temperature <= r.temperature <= settings.max_temperature
@@ -119,7 +119,7 @@ def calculate_plant_health_index(db: Session, plant_id: int, period_days: int = 
         elif is_moisture_good or is_temp_good:
              good_points += 0.5 
 
-    # 5. Рахуємо результат
+
     score = round((good_points / total_points) * 100, 2)
     
     status = "Critical"
